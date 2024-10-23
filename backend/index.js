@@ -4,6 +4,8 @@ const cors = require('cors');
 const socketIo = require('socket.io');
 const http = require('http');
 require('dotenv').config();
+const path = require('path'); // Add this line
+
 
 const authRoutes = require('./routes/authRoutes');
 const chatRoutes = require('./routes/chatRoutes');
@@ -22,6 +24,8 @@ const io = socketIo(server, {
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 
 // Routes
 app.use('/api/auth', authRoutes);

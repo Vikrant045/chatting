@@ -11,6 +11,7 @@ const ChatBox = ({ currentUser, selectedUser }) => {
   const [message, setMessage] = useState("");
   const messagesEndRef = useRef(null); // Reference for scrolling
   const [msgStatus, setMsgStatus] = useState(false);
+  const [image, setImage] = useState(null); // New state for image
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
@@ -19,54 +20,45 @@ const ChatBox = ({ currentUser, selectedUser }) => {
     }
   };
 
-
   useEffect(() => {
-    // Listen for the "active-chat" event from the server
     socket.on("active-chat", ({ from, to }) => {
       console.log("Active chat detected between", from, to);
-         const fetchMessages = async () => {
-           try {
-             const response = await api.get(
-               `chat/messages/${currentUser.id}/${selectedUser._id}`,
-               {
-                 headers: {
-                   Authorization: `Bearer ${localStorage.getItem("token")}`,
-                 },
-               }
-             );
-             setMessages(response.data);
-           } catch (error) {
-             console.error(
-               "Error fetching messages:",
-               error.response ? error.response.data : error.message
-             );
-           }
-         };
-         fetchMessages();
+      const fetchMessages = async () => {
+        try {
+          const response = await api.get(
+            `chat/messages/${currentUser.id}/${selectedUser._id}`,
+            {
+              headers: {
+                Authorization: `Bearer ${localStorage.getItem("token")}`,
+              },
+            }
+          );
+          setMessages(response.data);
+        } catch (error) {
+          console.error(
+            "Error fetching messages:",
+            error.response ? error.response.data : error.message
+          );
+        }
+      };
+      fetchMessages();
+
       // Check if the current user is part of the active chat
       if (
-        (currentUser === from && selectedUser === to) ||
-        (currentUser === to && selectedUser === from)
+        (currentUser.id === from && selectedUser._id === to) ||
+        (currentUser.id === to && selectedUser._id === from)
       ) {
-        console.log("in side the active chat")
-        // Both users are actively chatting - update the UI or state accordingly
+        console.log("Inside the active chat");
         setMsgStatus(true);
       }
     });
 
-    // Cleanup the event listener when the component unmounts
     return () => {
       socket.off("active-chat");
     };
   }, [currentUser, selectedUser]);
 
-
-  
-
-
-
   useEffect(() => {
-    // Register the user with the socket
     socket.emit("register", currentUser.id);
 
     const fetchMessages = async () => {
@@ -89,7 +81,7 @@ const ChatBox = ({ currentUser, selectedUser }) => {
     };
 
     if (selectedUser) {
-      fetchMessages(); // Fetch messages when a user is selected
+      fetchMessages();
       socket.emit("reset-unread-count", {
         to: currentUser.id,
         from: selectedUser._id,
@@ -115,27 +107,12 @@ const ChatBox = ({ currentUser, selectedUser }) => {
     };
   }, [currentUser, selectedUser]);
 
-  // useEffect(() => {
-  //   socket.on("reconnect", () => {
-  //     const userId = currentUser.id;
-  //     const chatPartnerId = selectedUser?._id;
-
-  //     if (userId && chatPartnerId) {
-  //       socket.emit("rejoin-room", { userId, otherUserId: chatPartnerId });
-  //     }
-  //   });
-
-  //   return () => {
-  //     socket.off("reconnect");
-  //   };
-  // }, [currentUser, selectedUser]);
-
   useEffect(() => {
     scrollToBottom(); // Scroll to the bottom whenever messages change
   }, [messages]);
 
   const sendMessage = async () => {
-    if (!message) return; // Prevent sending an empty message
+    if (!message && !image) return; // Prevent sending an empty message
 
     const newMessage = {
       from: currentUser.id,
@@ -144,22 +121,42 @@ const ChatBox = ({ currentUser, selectedUser }) => {
       timestamp: new Date().toISOString(),
     };
 
-    try {
-      const response = await api.post("/chat/messages", newMessage, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
+    if (image) {
+      // Handle image upload
+      const formData = new FormData();
+      formData.append("image", image);
+      formData.append("from", currentUser.id);
+      formData.append("to", selectedUser._id);
 
-      socket.emit("send-message", newMessage);
-      setMessages((prevMessages) => [...prevMessages, newMessage]);
-      setMessage(""); // Clear the input field after sending
-    } catch (error) {
-      console.error(
-        "Error sending message:",
-        error.response ? error.response.data : error.message
-      );
+      try {
+        const response = await api.post("/chat/messages/image", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        socket.emit("send-message", response.data);
+        setMessages((prevMessages) => [...prevMessages, response.data]);
+        setImage(null); // Clear image after sending
+      } catch (error) {
+        console.error("Error uploading image:", error);
+      }
+    } else {
+      // Handle text message
+      try {
+        const response = await api.post("/chat/messages", newMessage, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+        socket.emit("send-message", response.data);
+        setMessages((prevMessages) => [...prevMessages, response.data]);
+      } catch (error) {
+        console.error("Error sending message:", error);
+      }
     }
+
+    setMessage(""); // Clear input field
   };
 
   return (
@@ -184,12 +181,20 @@ const ChatBox = ({ currentUser, selectedUser }) => {
                   : "bg-gray-500 text-gray-200"
               }`}
             >
-              <span className="flex justify-center items-center">
-                {msg.content}{" "}
+              <span className="flex flex-col items-start">
+                {msg.content.type === "image" ? (
+                  <img
+                    src={`http://localhost:8002/${msg.content.url}`}
+                    alt="sent-img"
+                    style={{ width: "200px" }}
+                  />
+                ) : (
+                  msg.content
+                )}
                 {msg.isRead !== true &&
                   msg.from === currentUser?.id &&
-                  !msgStatus && <FaCheck color="orange" className="ml-2" />}
-                {(msg.isRead || msgStatus) && msg.from === currentUser?.id && (
+                  <FaCheck color="orange" className="ml-2" />}
+                {(msg.isRead ) && msg.from === currentUser?.id && (
                   <FaCheckDouble color="orange" className="ml-2" />
                 )}
               </span>
@@ -207,6 +212,8 @@ const ChatBox = ({ currentUser, selectedUser }) => {
           value={message}
           onChange={(e) => setMessage(e.target.value)}
         />
+        <input type="file" onChange={(e) => setImage(e.target.files[0])} />
+
         <button
           className="ml-3 p-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none"
           onClick={sendMessage}
