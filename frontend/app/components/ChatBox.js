@@ -160,13 +160,13 @@ const ChatBox = ({ currentUser, selectedUser }) => {
   };
 
   return (
-    <div className="w-2/3 bg-gray-800 p-6 shadow-md rounded-lg flex flex-col border border-gray-700">
-      <h2 className="text-2xl font-semibold text-gray-200 mb-6 border-b border-gray-600 pb-4">
+    <div className="w-full md:w-2/3 bg-gray-900 p-6 shadow-lg rounded-lg flex flex-col border border-gray-700">
+      <h2 className="text-2xl font-semibold text-green-400 mb-6 border-b border-gray-600 pb-4">
         {currentUser?.username} Chat with{" "}
         <span className="text-gray-400">{selectedUser?.username}</span>
       </h2>
 
-      <div className="chat-messages mb-6 h-96 overflow-auto bg-gray-700 p-4 rounded-lg shadow-inner">
+      <div className="chat-messages mb-6 h-96 overflow-auto bg-gray-800 p-4 rounded-lg shadow-inner">
         {messages.map((msg, idx) => (
           <div
             key={idx}
@@ -174,48 +174,74 @@ const ChatBox = ({ currentUser, selectedUser }) => {
               msg.from === currentUser?.id ? "justify-end" : "justify-start"
             }`}
           >
-            <span
-              className={`text-lg p-2 rounded-lg ${
+            <div
+              className={`text-lg p-3 rounded-2xl max-w-xs ${
                 msg.from === currentUser?.id
                   ? "bg-blue-500 text-white"
-                  : "bg-gray-500 text-gray-200"
+                  : "bg-gray-700 text-gray-200"
               }`}
             >
-              <span className="flex flex-col items-start">
+              <div className="flex flex-col items-start">
                 {msg.content.type === "image" ? (
                   <img
                     src={`http://localhost:8002/${msg.content.url}`}
                     alt="sent-img"
-                    style={{ width: "200px" }}
+                    className="rounded-md mb-2 border border-gray-500 shadow-lg"
+                    style={{ maxWidth: "250px" }}
                   />
                 ) : (
-                  msg.content
+                  <p>{msg.content}</p>
                 )}
-                {msg.isRead !== true &&
-                  msg.from === currentUser?.id &&
-                  <FaCheck color="orange" className="ml-2" />}
-                {(msg.isRead ) && msg.from === currentUser?.id && (
-                  <FaCheckDouble color="orange" className="ml-2" />
-                )}
-              </span>
-            </span>
+                <div className="flex items-center justify-end mt-1">
+                  <span className="text-xs text-gray-400">
+                    {new Date(msg.timestamp).toLocaleTimeString()}
+                  </span>
+                  {msg.isRead !== true && msg.from === currentUser?.id && (
+                    <FaCheck color="orange" className="ml-2" />
+                  )}
+                  {msg.isRead && msg.from === currentUser?.id && (
+                    <FaCheckDouble color="orange" className="ml-2" />
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         ))}
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="message-input flex items-center">
+      <div className="message-input flex items-center space-x-3">
         <input
           type="text"
-          className="w-full p-4 text-[20px] bg-gray-600 text-gray-300 rounded-lg border-none focus:ring-2 focus:ring-blue-500"
+          className="flex-grow p-4 text-lg bg-gray-700 text-gray-300 rounded-full border-none focus:ring-2 focus:ring-green-500"
           placeholder="Type a message..."
           value={message}
           onChange={(e) => setMessage(e.target.value)}
         />
-        <input type="file" onChange={(e) => setImage(e.target.files[0])} />
-
+        <label htmlFor="file-upload" className="cursor-pointer">
+          <input
+            id="file-upload"
+            type="file"
+            className="hidden"
+            onChange={(e) => setImage(e.target.files[0])}
+          />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6 text-gray-300 hover:text-green-400 transition duration-300"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M3 16v-5a4 4 0 014-4h10a4 4 0 014 4v5M8 12h.01M12 12h.01M16 12h.01M12 16v5m-4-5h8"
+            />
+          </svg>
+        </label>
         <button
-          className="ml-3 p-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none"
+          className="p-4 bg-green-500 text-white rounded-full hover:bg-green-600 transition duration-300 focus:outline-none"
           onClick={sendMessage}
         >
           Send
