@@ -3,6 +3,8 @@ import { useState, useEffect, useRef } from "react";
 import io from "socket.io-client";
 import api from "../utils/api";
 import { FaCheck, FaCheckDouble } from "react-icons/fa";
+import Skeleton, { SkeletonTheme } from "react-loading-skeleton";
+import "react-loading-skeleton/dist/skeleton.css";
 
 const socket = io("http://localhost:8002"); // Ensure this points to your backend URL
 
@@ -165,7 +167,6 @@ const ChatBox = ({ currentUser, selectedUser }) => {
         {currentUser?.username} Chat with{" "}
         <span className="text-gray-400">{selectedUser?.username}</span>
       </h2>
-
       <div className="chat-messages mb-6 h-96 overflow-auto bg-gray-800 p-4 rounded-lg shadow-inner">
         {messages.map((msg, idx) => (
           <div
@@ -192,6 +193,7 @@ const ChatBox = ({ currentUser, selectedUser }) => {
                 ) : (
                   <p>{msg.content}</p>
                 )}
+
                 <div className="flex items-center justify-end mt-1">
                   <span className="text-xs text-gray-400">
                     {new Date(msg.timestamp).toLocaleTimeString()}
@@ -209,7 +211,6 @@ const ChatBox = ({ currentUser, selectedUser }) => {
         ))}
         <div ref={messagesEndRef} />
       </div>
-
       <div className="message-input flex items-center space-x-3">
         <input
           type="text"
@@ -247,6 +248,31 @@ const ChatBox = ({ currentUser, selectedUser }) => {
           Send
         </button>
       </div>
+      {/* <SkeletonTheme baseColor="green" highlightColor="#444">
+        <div className="flex space-x-3  items-center">
+          <Skeleton
+            count={1}
+            height={55}
+            width={850}
+            borderRadius={50}
+            containerClassName="flex flex-col "
+          />
+          <Skeleton
+            count={1}
+            height={22}
+            width={25}
+            borderRadius={30}
+            containerClassName="flex flex-col "
+          />
+          <Skeleton
+            count={1}
+            height={50}
+            width={65}
+            borderRadius={30}
+            containerClassName="flex flex-col "
+          />
+        </div>
+      </SkeletonTheme> */}
     </div>
   );
 };

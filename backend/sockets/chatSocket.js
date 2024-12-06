@@ -95,7 +95,7 @@ exports.chatSocket = (io) => {
         io.to(roomId).emit("active-chat", { from, to });
       }
     });
-
+4
     // Reset unread message count when the user reads messages
     socket.on("reset-unread-count", async ({ to, from }) => {
       try {

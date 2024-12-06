@@ -87,26 +87,28 @@ const UserList = ({ selectUser, currentUser }) => {
   });
 
   return (
-    <div className="w-1/3 bg-gray-900 p-4 border-r border-gray-700">
-
-      <h2 className="text-xl font-semibold text-gray-200 mb-4">Users</h2>
-      <ul className="space-y-2">
+    <div className="w-1/3 bg-gradient-to-b from-gray-800 to-gray-900 p-6 border-r border-gray-700 min-h-screen">
+      <h2 className="text-2xl font-bold text-white mb-6 tracking-wide">
+        Chats
+      </h2>
+      <ul className="space-y-3">
         {sortedUsers.map((user) => (
           <li
             key={user._id}
-            // className={`p-2 py-3 font-semibold rounded-lg cursor-pointer hover:bg-gray-700 }`}
-            className={`p-2 py-3 font-semibold rounded-lg cursor-pointer ${
+            className={`flex items-center justify-between p-4 rounded-lg shadow-sm transition-all duration-300 cursor-pointer ${
               selectedUser?._id === user._id
-                ? "bg-green-600"
-                : "hover:bg-gray-700 "
+                ? "bg-green-700 shadow-lg"
+                : "bg-gray-700 hover:bg-gray-600"
             }`}
             onClick={() => handleUserSelect(user)}
           >
-            <span className="text-gray-300">{user.username}</span>
-            {unreadCounts[user._id] > 0 && selectedUser?._id !== user._id &&(
-              <span className=" text-white bg-green-600 p-1 px-2 rounded-full  font-semibold ml-48">
-                {unreadCounts[user._id]}
+            <span className="text-gray-200 font-medium text-lg">
+              {user.username}
             </span>
+            {unreadCounts[user._id] > 0 && selectedUser?._id !== user._id && (
+              <span className="text-white bg-red-600 text-sm font-semibold px-3 py-1 rounded-full">
+                {unreadCounts[user._id]}
+              </span>
             )}
           </li>
         ))}
